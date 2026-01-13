@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  /* Prevent font size adjustment on iOS */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  /* Prevent horizontal scroll completely */
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+  position: relative;
+}
+
+body {
+  /* Prevent horizontal scroll completely */
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+  position: relative;
+  /* Prevent horizontal scroll on all devices */
+  overscroll-behavior-x: none;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  overflow-y: auto;
+  /* Prevent text selection issues on mobile */
+  -webkit-tap-highlight-color: transparent;
+  /* Improve font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile-first: Ensure all containers respect viewport */
+* {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+.container,
+main,
+section {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Touch-friendly interactive elements */
+button,
+a,
+input,
+select,
+textarea {
+  /* Minimum touch target size (44x44px recommended by Apple/Google) */
+  min-height: 44px;
+  min-width: 44px;
+  /* Prevent iOS zoom on input focus */
+  font-size: 16px;
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Prevent horizontal scroll on tables and pre elements */
+table,
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Media queries for specific device optimizations */
+@media (max-width: 360px) {
+  /* Extra small devices (Samsung S8+: 360px) */
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 361px) and (max-width: 414px) {
+  /* Small to medium phones (iPhone XR: 414px) */
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 415px) {
+  /* Larger phones and tablets */
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Smooth scrolling on iOS */
+@supports (-webkit-overflow-scrolling: touch) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: light;
+  }
+}
+
+
+
