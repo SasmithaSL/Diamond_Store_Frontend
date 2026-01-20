@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import WhatsAppSupport from "@/components/WhatsAppSupport";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className={`${inter.variable} font-sans min-h-screen bg-gray-50`}>
         {children}
+        <WhatsAppSupport />
       </body>
     </html>
   );

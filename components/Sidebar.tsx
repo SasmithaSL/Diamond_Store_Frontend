@@ -30,13 +30,63 @@ export default function Sidebar({
   // Auto-open sidebar on desktop, closed on mobile
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (window.innerWidth >= 1024) {
-        setIsOpen(true);
-      } else {
-        setIsOpen(false);
-      }
+      const handleResize = () => {
+        if (window.innerWidth >= 1024) {
+          setIsOpen(true);
+        } else {
+          setIsOpen(false);
+        }
+      };
+
+      // Set initial state
+      handleResize();
+
+      // Listen for resize events
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
     }
   }, []);
+
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const isMobile = window.innerWidth < 1024;
+
+    if (isOpen && isMobile) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      // Prevent scrolling
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
+    } else {
+      // Restore scrolling
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+      
+      // Restore scroll position
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
+    };
+  }, [isOpen]);
 
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
