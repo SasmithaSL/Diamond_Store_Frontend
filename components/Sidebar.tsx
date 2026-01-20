@@ -90,21 +90,22 @@ export default function Sidebar({
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-white shadow-xl border-r border-gray-200 z-40 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 h-screen w-64 bg-white shadow-xl border-r border-gray-200 z-40 transform transition-transform duration-300 ease-in-out overflow-hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
         style={{
           position: "fixed",
           left: 0,
           top: 0,
-          height: "100vh",
+          height: "100dvh", // Use dynamic viewport height for mobile
           width: "256px",
           zIndex: 40,
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <div className="flex flex-col h-full" style={{ height: "100%" }}>
-          {/* User Info Section */}
-          <div className="flex-shrink-0 p-6 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+        {/* User Info Section */}
+        <div className="flex-shrink-0 p-6 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
             <div className="flex items-center gap-3 mb-2">
               <Link
                 href="/profile"
@@ -179,8 +180,8 @@ export default function Sidebar({
             </div>
           </div>
 
-          {/* Menu Items */}
-          <nav className="flex-1 min-h-0 overflow-y-auto py-4">
+        {/* Menu Items */}
+        <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4" style={{ flexShrink: 1 }}>
             {menuItems.map((item) => (
               <Link
                 key={item.href}
@@ -197,15 +198,14 @@ export default function Sidebar({
             ))}
           </nav>
 
-          {/* Logout Button */}
-          <div className="flex-shrink-0 p-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="w-full px-6 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
-            >
-              Logout
-            </button>
-          </div>
+        {/* Logout Button */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-200 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="w-full px-6 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
+          >
+            Logout
+          </button>
         </div>
       </aside>
     </>
