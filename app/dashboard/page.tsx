@@ -466,10 +466,10 @@ export default function DashboardPage() {
       );
       fetchDashboard(); // Refresh dashboard
 
-      // Auto-hide success message after 3 seconds
+      // Auto-hide success message after 5 seconds
       setTimeout(() => {
         setOrderSuccess("");
-      }, 3000);
+      }, 5000);
     } catch (err: any) {
       setOrderError(err.response?.data?.error || "Failed to submit request");
       // Auto-hide error message after 3 seconds
@@ -1018,8 +1018,14 @@ export default function DashboardPage() {
                   // Calculate pill position - use actual progress position
                   // For very small values (0 or near 0), use a small minimum to keep pill visible
                   // The pill uses translateX(-50%) so we need minimal offset for visibility
-                  const pillLeftPosition =
+                  // For values >= 90,000, cap at 95% to prevent overflow beyond container
+                  let pillLeftPosition =
                     weeklySales === 0 ? 1.5 : Math.max(1.5, finalProgressWidth);
+                  
+                  // Cap pill position at 95% when sales exceed 90,000 to prevent overflow
+                  if (weeklySales >= 90000) {
+                    pillLeftPosition = Math.min(95, pillLeftPosition);
+                  }
 
                   return (
                     <>

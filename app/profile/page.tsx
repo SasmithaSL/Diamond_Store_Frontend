@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
-import { getImageUrl, handleImageError } from "@/lib/imageUtils";
 
 interface UserProfile {
   id: number;
@@ -30,7 +29,6 @@ export default function ProfilePage() {
     password: "",
     confirmPassword: "",
   });
-  const [preview, setPreview] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -77,20 +75,6 @@ export default function ProfilePage() {
         password: "",
         confirmPassword: "",
       });
-
-      // Reset preview image with timestamp to force refresh
-      if (user.face_image) {
-        const imageUrl = getImageUrl(user.face_image);
-        if (imageUrl) {
-          // Add timestamp to force browser to reload image
-          const separator = imageUrl.includes("?") ? "&" : "?";
-          setPreview(`${imageUrl}${separator}t=${Date.now()}`);
-        } else {
-          setPreview("");
-        }
-      } else {
-        setPreview("");
-      }
     } catch (err: any) {
       console.error("Failed to fetch profile:", err);
     } finally {
@@ -114,12 +98,6 @@ export default function ProfilePage() {
         ...formData,
         faceImage: file,
       });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -281,20 +259,9 @@ export default function ProfilePage() {
                   <span className="text-sm text-gray-500">
                     {formData.faceImage
                       ? formData.faceImage.name
-                      : preview
-                      ? "Current image"
                       : "No file chosen"}
                   </span>
                 </div>
-                {preview && (
-                  <div className="mt-3">
-                    <img
-                      src={preview}
-                      alt="Preview"
-                      className="w-24 h-24 object-cover rounded-lg border border-gray-300"
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Current Password Field */}

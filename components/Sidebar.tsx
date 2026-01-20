@@ -104,7 +104,7 @@ export default function Sidebar({
       >
         <div className="flex flex-col h-full" style={{ height: "100%" }}>
           {/* User Info Section */}
-          <div className="p-6 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
+          <div className="flex-shrink-0 p-6 bg-gradient-to-r from-primary-600 to-primary-700 text-white">
             <div className="flex items-center gap-3 mb-2">
               <Link
                 href="/profile"
@@ -180,7 +180,7 @@ export default function Sidebar({
           </div>
 
           {/* Menu Items */}
-          <nav className="flex-1 overflow-y-auto py-4">
+          <nav className="flex-1 min-h-0 overflow-y-auto py-4">
             {menuItems.map((item) => (
               <Link
                 key={item.href}
@@ -198,7 +198,7 @@ export default function Sidebar({
           </nav>
 
           {/* Logout Button */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="flex-shrink-0 p-4 border-t border-gray-200">
             <button
               onClick={handleLogout}
               className="w-full px-6 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium"

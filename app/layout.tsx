@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Top-Up System",
+  title: "Quick Smart",
   description: "Digital Top-Up and Point Management System",
 };
 

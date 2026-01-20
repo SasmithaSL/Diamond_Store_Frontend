@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
-import { getImageUrl } from "@/lib/imageUtils";
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -17,7 +16,6 @@ export default function EditProfilePage() {
     password: "",
     confirmPassword: "",
   });
-  const [preview, setPreview] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -44,13 +42,6 @@ export default function EditProfilePage() {
         password: "",
         confirmPassword: "",
       });
-      if (user.face_image) {
-        const imageUrl = getImageUrl(user.face_image);
-        if (imageUrl) {
-          console.log("Setting preview image URL:", imageUrl);
-          setPreview(imageUrl);
-        }
-      }
     } catch (err: any) {
       console.error("Failed to fetch profile:", err);
     } finally {
@@ -74,12 +65,6 @@ export default function EditProfilePage() {
         ...formData,
         faceImage: file,
       });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -246,20 +231,9 @@ export default function EditProfilePage() {
                   <span className="text-sm text-gray-500">
                     {formData.faceImage
                       ? formData.faceImage.name
-                      : preview
-                      ? "Current image"
                       : "No file chosen"}
                   </span>
                 </div>
-                {preview && (
-                  <div className="mt-3">
-                    <img
-                      src={preview}
-                      alt="Preview"
-                      className="w-24 h-24 object-cover rounded-lg border border-gray-300"
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Current Password Field - Only show when changing password */}

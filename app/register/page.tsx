@@ -18,9 +18,6 @@ export default function RegisterPage() {
   const [faceImage, setFaceImage] = useState<File | null>(null);
   const [idCardFront, setIdCardFront] = useState<File | null>(null);
   const [idCardBack, setIdCardBack] = useState<File | null>(null);
-  const [facePreview, setFacePreview] = useState<string>('');
-  const [idFrontPreview, setIdFrontPreview] = useState<string>('');
-  const [idBackPreview, setIdBackPreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -55,13 +52,6 @@ export default function RegisterPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFaceImage(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFacePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -69,13 +59,6 @@ export default function RegisterPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setIdCardFront(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setIdFrontPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -83,13 +66,6 @@ export default function RegisterPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setIdCardBack(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setIdBackPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -202,18 +178,12 @@ export default function RegisterPage() {
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
-            <p className="text-gray-600">Register for your top-up account</p>
+            <p className="text-gray-600">Register for your quick smart account</p>
           </div>
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
               {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-              Registration successful! Your account is pending admin approval. Redirecting...
             </div>
           )}
 
@@ -301,15 +271,6 @@ export default function RegisterPage() {
                 Face Image <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
-                {facePreview && (
-                  <div className="mb-3">
-                    <img
-                      src={facePreview}
-                      alt="Face Preview"
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                    />
-                  </div>
-                )}
                 <input
                   type="file"
                   accept="image/*"
@@ -325,15 +286,6 @@ export default function RegisterPage() {
                 ID/Passport Card Front <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
-                {idFrontPreview && (
-                  <div className="mb-3">
-                    <img
-                      src={idFrontPreview}
-                      alt="ID Front Preview"
-                      className="w-full max-w-md h-48 object-contain rounded-lg border border-gray-300 bg-gray-50"
-                    />
-                  </div>
-                )}
                 <input
                   type="file"
                   accept="image/*"
@@ -349,15 +301,6 @@ export default function RegisterPage() {
                 ID/Passport Card Back <span className="text-red-500">*</span>
               </label>
               <div className="mt-1">
-                {idBackPreview && (
-                  <div className="mb-3">
-                    <img
-                      src={idBackPreview}
-                      alt="ID Back Preview"
-                      className="w-full max-w-md h-48 object-contain rounded-lg border border-gray-300 bg-gray-50"
-                    />
-                  </div>
-                )}
                 <input
                   type="file"
                   accept="image/*"
@@ -380,6 +323,12 @@ export default function RegisterPage() {
               <span className="text-red-500">*</span> All fields are required
             </p>
           </form>
+
+          {success && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+              Registration successful! Your account is pending admin approval. Redirecting...
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
