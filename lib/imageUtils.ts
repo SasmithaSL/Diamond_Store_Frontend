@@ -18,8 +18,16 @@ export function getImageUrl(imagePath: string | null | undefined): string | null
   const cleanPath = imagePath.replace(/^\/+/, '');
   const url = `${baseUrl}/uploads/${cleanPath}`;
   
-  // Add cache busting timestamp
-  return `${url}?t=${Date.now()}`;
+  // Add cache busting timestamp - use profile update timestamp if available
+  let cacheBuster = Date.now();
+  if (typeof window !== "undefined") {
+    const profileUpdateTime = localStorage.getItem("profilePictureUpdateTime");
+    if (profileUpdateTime) {
+      cacheBuster = parseInt(profileUpdateTime, 10);
+    }
+  }
+  
+  return `${url}?t=${cacheBuster}`;
 }
 
 /**

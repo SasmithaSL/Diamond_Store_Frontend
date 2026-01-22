@@ -21,6 +21,8 @@ export default function DashboardLayout({
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profilePictureUpdated, setProfilePictureUpdated] = useState(false);
+  const [imageKey, setImageKey] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -28,10 +30,20 @@ export default function DashboardLayout({
       return;
     }
 
+    // Check if profile picture was updated
+    if (typeof window !== "undefined") {
+      setProfilePictureUpdated(localStorage.getItem("profilePictureUpdated") === "true");
+    }
+
     fetchUserData();
 
     // Listen for profile updates
     const handleProfileUpdate = () => {
+      if (typeof window !== "undefined") {
+        setProfilePictureUpdated(localStorage.getItem("profilePictureUpdated") === "true");
+        // Force image refresh by updating the key
+        setImageKey(prev => prev + 1);
+      }
       fetchUserData();
     };
     window.addEventListener("profileUpdated", handleProfileUpdate);
@@ -130,20 +142,27 @@ export default function DashboardLayout({
             href="/profile"
             className="relative flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
           >
-            {userData.face_image ? (
+            {userData.face_image && profilePictureUpdated ? (
               <img
+                key={`avatar-${imageKey}-${userData.face_image}`}
                 src={getImageUrl(userData.face_image) || ""}
                 alt={userData.name}
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-gray-200"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-gray-300"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src =
-                    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect fill="%23ddd" width="48" height="48" rx="24"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999" font-size="20"%3E👤%3C/text%3E%3C/svg%3E';
+                  target.style.display = "none";
+                  const parent = target.parentElement;
+                  if (parent && !parent.querySelector(".default-avatar")) {
+                    const fallback = document.createElement("div");
+                    fallback.className = "default-avatar w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-300 text-gray-700 font-semibold text-sm sm:text-base";
+                    fallback.innerHTML = `<span>${(userData.name || "U")[0].toUpperCase()}</span>`;
+                    parent.appendChild(fallback);
+                  }
                 }}
               />
             ) : (
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-200">
-                <span className="text-lg">👤</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-300 text-gray-700 font-semibold text-sm sm:text-base">
+                <span>{(userData.name || "U")[0].toUpperCase()}</span>
               </div>
             )}
             {/* Green checkmark badge */}
@@ -170,7 +189,7 @@ export default function DashboardLayout({
         <Sidebar
           userName={userData.name}
           userBalance={userData.points_balance}
-          userImage={userData.face_image}
+          userImage={profilePictureUpdated ? userData.face_image : null}
           isOpen={sidebarOpen}
           setIsOpen={setSidebarOpen}
         />

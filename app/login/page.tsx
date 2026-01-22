@@ -9,7 +9,7 @@ import { setToken } from "@/lib/auth";
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    idNumber: "",
+    email: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
@@ -19,6 +19,7 @@ export default function LoginPage() {
   );
   const [successMessage, setSuccessMessage] = useState("");
   const [rejectionMessage, setRejectionMessage] = useState("");
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
 
   // Check if account was just approved or rejected
   useEffect(() => {
@@ -40,37 +41,18 @@ export default function LoginPage() {
           "Your account registration has been rejected. Please contact support for more information."
         );
         setErrorType("rejected");
+        setShowRejectionModal(true);
         sessionStorage.removeItem("accountRejected");
-        // Clear after 10 seconds
-        setTimeout(() => setRejectionMessage(""), 10000);
       }
     }
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
-    // For ID Number, must start with numbers, can have letters after
-    if (name === "idNumber") {
-      // Remove special characters, keep only numbers and letters
-      let cleanedValue = value.replace(/[^0-9A-Za-z]/g, "");
-
-      // Ensure it starts with a number
-      if (cleanedValue.length > 0 && !/^[0-9]/.test(cleanedValue)) {
-        // If doesn't start with number, remove leading letters
-        cleanedValue = cleanedValue.replace(/^[A-Za-z]+/, "");
-      }
-
-      setFormData({
-        ...formData,
-        [name]: cleanedValue,
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
     setError("");
   };
 
@@ -123,57 +105,84 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-          <div className="text-center mb-6">
+    <>
+      {/* Rejection Modal - Full Screen */}
+      {showRejectionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+          <div className="w-full h-full flex flex-col">
+            {/* Header with X button */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <button
+                onClick={() => setShowRejectionModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Close"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+              <h2 className="text-lg font-semibold text-gray-800">Verify Identity</h2>
+              <div className="w-6"></div> {/* Spacer for centering */}
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+              {/* Error Icon */}
+              <div className="mb-6 relative">
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center">
+                      <span className="text-white text-4xl font-bold">!</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Heading */}
+              <h1 className="text-2xl font-bold text-gray-900 mb-3 text-center">
+                Verification Unsuccessful
+              </h1>
+
+              {/* Subtext */}
+              <p className="text-base text-gray-700 mb-8 text-center max-w-md">
+                Please re-submit your information to verify your identity
+              </p>
+
+              {/* Re-submit Button */}
+              <button
+                onClick={() => {
+                  setShowRejectionModal(false);
+                  router.push("/register");
+                }}
+                className="bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              >
+                Re-submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Login Form */}
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-8">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+            <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
               Welcome Back
             </h1>
             <p className="text-gray-600">Sign in to your account</p>
           </div>
-
-          {successMessage && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-              <div className="flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                <span className="font-semibold">{successMessage}</span>
-              </div>
-            </div>
-          )}
-
-          {rejectionMessage && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-              <div className="flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span className="font-semibold">{rejectionMessage}</span>
-              </div>
-            </div>
-          )}
 
           {error && (
             <div
@@ -280,16 +289,16 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID Number
+                Email
               </label>
               <input
-                type="text"
-                name="idNumber"
-                value={formData.idNumber}
+                type="email"
+                name="email"
+                value={formData.email}
                 onChange={handleInputChange}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
-                placeholder="Enter your ID number"
+                placeholder="Enter your email"
               />
             </div>
 
@@ -328,8 +337,30 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
+
+          {successMessage && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span className="font-semibold">{successMessage}</span>
+              </div>
+            </div>
+          )}
+        </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

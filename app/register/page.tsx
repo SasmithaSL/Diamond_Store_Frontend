@@ -9,8 +9,9 @@ import { setToken } from '@/lib/auth';
 export default function RegisterPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    name: '',
+    phoneNumber: '',
     nickname: '',
+    email: '',
     idNumber: '',
     password: '',
     confirmPassword: '',
@@ -18,6 +19,9 @@ export default function RegisterPage() {
   const [faceImage, setFaceImage] = useState<File | null>(null);
   const [idCardFront, setIdCardFront] = useState<File | null>(null);
   const [idCardBack, setIdCardBack] = useState<File | null>(null);
+  const [faceImagePreview, setFaceImagePreview] = useState<string>('');
+  const [idCardFrontPreview, setIdCardFrontPreview] = useState<string>('');
+  const [idCardBackPreview, setIdCardBackPreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -40,6 +44,13 @@ export default function RegisterPage() {
         ...formData,
         [name]: cleanedValue,
       });
+    } else if (name === 'phoneNumber') {
+      // For phone number, keep only digits
+      const cleanedValue = value.replace(/\D/g, '');
+      setFormData({
+        ...formData,
+        [name]: cleanedValue,
+      });
     } else {
       setFormData({
         ...formData,
@@ -52,6 +63,12 @@ export default function RegisterPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFaceImage(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFaceImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -59,6 +76,12 @@ export default function RegisterPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setIdCardFront(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setIdCardFrontPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -66,6 +89,12 @@ export default function RegisterPage() {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setIdCardBack(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setIdCardBackPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -75,14 +104,31 @@ export default function RegisterPage() {
     setSuccess(false);
 
     // Validate all required fields
-    if (!formData.name || formData.name.trim() === '') {
-      setError('Full name is required');
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === '') {
+      setError('Phone number is required');
+      return;
+    }
+
+    if (formData.phoneNumber.length < 10) {
+      setError('Phone number must be at least 10 digits');
       return;
     }
 
     // Nickname is optional, but if provided, validate it
     if (formData.nickname && formData.nickname.trim().length > 100) {
       setError('Nickname must be 100 characters or less');
+      return;
+    }
+
+    // Email validation
+    if (!formData.email || formData.email.trim() === '') {
+      setError('Email is required');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setError('Please enter a valid email address');
       return;
     }
 
@@ -130,10 +176,11 @@ export default function RegisterPage() {
 
     try {
       const data = new FormData();
-      data.append('name', formData.name);
+      data.append('phoneNumber', formData.phoneNumber);
       if (formData.nickname && formData.nickname.trim() !== '') {
         data.append('nickname', formData.nickname.trim());
       }
+      data.append('email', formData.email.trim());
       data.append('idNumber', formData.idNumber);
       data.append('password', formData.password);
       data.append('faceImage', faceImage);
@@ -181,31 +228,10 @@ export default function RegisterPage() {
             <p className="text-gray-600">Register for your quick smart account</p>
           </div>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nickname <span className="text-gray-400 text-xs">(Optional)</span>
+                Nickname
               </label>
               <input
                 type="text"
@@ -214,9 +240,23 @@ export default function RegisterPage() {
                 onChange={handleInputChange}
                 maxLength={100}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
-                placeholder="Enter a nickname (will be displayed instead of name)"
+                placeholder="Enter your nickname"
               />
-              <p className="text-xs text-gray-500 mt-1"></p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
+                placeholder="Enter your email"
+              />
             </div>
 
             <div>
@@ -232,6 +272,23 @@ export default function RegisterPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
                 placeholder="Enter your ID number"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleInputChange}
+                required
+                minLength={10}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition"
+                placeholder="Enter your phone number"
+              />
+              <p className="text-xs text-gray-500 mt-1">Enter country code + number without + or spaces</p>
             </div>
 
             <div>
@@ -266,48 +323,168 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Face Image <span className="text-red-500">*</span>
-              </label>
-              <div className="mt-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFaceImageChange}
-                  required
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                />
-              </div>
-            </div>
+            {/* Upload NIC / Passport Photo Section */}
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                Upload NIC / Passport photo<span className="text-red-500">*</span>
+              </h2>
+              
+              <div className="space-y-6">
+                {/* Front ID Photo Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Upload Input Box */}
+                  <div>
+                    <label className="cursor-pointer">
+                      <div className="bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-400 transition-colors aspect-square flex items-center justify-center relative overflow-hidden">
+                        {idCardFrontPreview ? (
+                          <img 
+                            src={idCardFrontPreview} 
+                            alt="Front ID preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg
+                            className="w-12 h-12 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleIdCardFrontChange}
+                          required
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 text-center mt-2">Front</p>
+                    </label>
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID/Passport Card Front <span className="text-red-500">*</span>
-              </label>
-              <div className="mt-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleIdCardFrontChange}
-                  required
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                />
-              </div>
-            </div>
+                  {/* Example Image Box */}
+                  <div>
+                    <div className="bg-blue-50 rounded-lg border-2 border-blue-200 aspect-square flex items-center justify-center p-4 overflow-hidden">
+                      <img 
+                        src="/images/id front.png" 
+                        alt="Front ID example" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-600 text-center mt-2">Example</p>
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID/Passport Card Back <span className="text-red-500">*</span>
-              </label>
-              <div className="mt-1">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleIdCardBackChange}
-                  required
-                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-                />
+                {/* Back ID Photo Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Upload Input Box */}
+                  <div>
+                    <label className="cursor-pointer">
+                      <div className="bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-400 transition-colors aspect-square flex items-center justify-center relative overflow-hidden">
+                        {idCardBackPreview ? (
+                          <img 
+                            src={idCardBackPreview} 
+                            alt="Back ID preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg
+                            className="w-12 h-12 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleIdCardBackChange}
+                          required
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 text-center mt-2">Back</p>
+                    </label>
+                  </div>
+
+                  {/* Example Image Box */}
+                  <div>
+                    <div className="bg-blue-50 rounded-lg border-2 border-blue-200 aspect-square flex items-center justify-center p-4 overflow-hidden">
+                      <img 
+                        src="/images/id back.png" 
+                        alt="Back ID example" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-600 text-center mt-2">Example</p>
+                  </div>
+                </div>
+
+                {/* Holding ID Photo Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Upload Input Box */}
+                  <div>
+                    <label className="cursor-pointer">
+                      <div className="bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-primary-400 transition-colors aspect-square flex items-center justify-center relative overflow-hidden">
+                        {faceImagePreview ? (
+                          <img 
+                            src={faceImagePreview} 
+                            alt="Holding ID preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg
+                            className="w-12 h-12 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFaceImageChange}
+                          required
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 text-center mt-2">Holding ID photo</p>
+                    </label>
+                  </div>
+
+                  {/* Example Image Box */}
+                  <div>
+                    <div className="bg-blue-50 rounded-lg border-2 border-blue-200 aspect-square flex items-center justify-center p-4 overflow-hidden">
+                      <img 
+                        src="/images/holding id.png" 
+                        alt="Holding ID example" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-600 text-center mt-2">Example</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -323,6 +500,12 @@ export default function RegisterPage() {
               <span className="text-red-500">*</span> All fields are required
             </p>
           </form>
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
 
           {success && (
             <div className="mt-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">

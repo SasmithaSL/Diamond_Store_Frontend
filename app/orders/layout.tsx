@@ -14,6 +14,7 @@ export default function OrdersLayout({
   const router = useRouter();
   const [userData, setUserData] = useState<{ name: string; points_balance: number; face_image: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profilePictureUpdated, setProfilePictureUpdated] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -21,7 +22,25 @@ export default function OrdersLayout({
       return;
     }
 
+    // Check if profile picture was updated
+    if (typeof window !== "undefined") {
+      setProfilePictureUpdated(localStorage.getItem("profilePictureUpdated") === "true");
+    }
+
     fetchUserData();
+
+    // Listen for profile updates
+    const handleProfileUpdate = () => {
+      if (typeof window !== "undefined") {
+        setProfilePictureUpdated(localStorage.getItem("profilePictureUpdated") === "true");
+      }
+      fetchUserData();
+    };
+    window.addEventListener("profileUpdated", handleProfileUpdate);
+
+    return () => {
+      window.removeEventListener("profileUpdated", handleProfileUpdate);
+    };
   }, [router]);
 
   const fetchUserData = async () => {
@@ -62,7 +81,7 @@ export default function OrdersLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar userName={userData.name} userBalance={userData.points_balance} userImage={userData.face_image} />
+      <Sidebar userName={userData.name} userBalance={userData.points_balance} userImage={profilePictureUpdated ? userData.face_image : null} />
       <div className="flex-1 lg:ml-64">
         {children}
       </div>

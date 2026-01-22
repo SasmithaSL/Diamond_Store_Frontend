@@ -164,39 +164,25 @@ export default function Sidebar({
               >
                 {userImage ? (
                   <img
+                    key={`sidebar-avatar-${userImage}`}
                     src={getImageUrl(userImage) || ""}
                     alt={userName}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white border-opacity-30"
                     onError={(e) => {
-                      // Hide image and show fallback icon
                       const target = e.target as HTMLImageElement;
                       target.style.display = "none";
                       const parent = target.parentElement;
-                      if (parent && !parent.querySelector(".fallback-icon")) {
+                      if (parent && !parent.querySelector(".default-avatar")) {
                         const fallback = document.createElement("div");
-                        fallback.className =
-                          "fallback-icon w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center";
-                        fallback.innerHTML =
-                          '<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>';
+                        fallback.className = "default-avatar w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center border-2 border-white border-opacity-30 text-white font-semibold text-lg";
+                        fallback.innerHTML = `<span>${(userName || "U")[0].toUpperCase()}</span>`;
                         parent.appendChild(fallback);
                       }
                     }}
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
+                  <div className="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center border-2 border-white border-opacity-30 text-white font-semibold text-lg">
+                    <span>{(userName || "U")[0].toUpperCase()}</span>
                   </div>
                 )}
               </Link>

@@ -145,6 +145,14 @@ export default function ProfilePage() {
         },
       });
 
+      // If face image was updated, set a flag in localStorage
+      if (formData.faceImage) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("profilePictureUpdated", "true");
+          localStorage.setItem("profilePictureUpdateTime", Date.now().toString());
+        }
+      }
+
       // Update password if provided
       if (formData.password) {
         await api.put("/users/change-password", {

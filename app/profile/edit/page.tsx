@@ -108,12 +108,25 @@ export default function EditProfilePage() {
         },
       });
 
+      // If face image was updated, set a flag in localStorage
+      if (formData.faceImage) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("profilePictureUpdated", "true");
+          localStorage.setItem("profilePictureUpdateTime", Date.now().toString());
+        }
+      }
+
       // Update password if provided
       if (formData.password) {
         await api.put("/users/change-password", {
           currentPassword: formData.currentPassword,
           newPassword: formData.password,
         });
+      }
+
+      // Trigger dashboard refresh by dispatching a custom event
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("profileUpdated"));
       }
 
       setSuccess(true);
