@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
 import api from "@/lib/api";
@@ -8,120 +8,152 @@ import api from "@/lib/api";
 export default function PendingPage() {
   const router = useRouter();
   const [isAuth, setIsAuth] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
+  const isCheckingRef = useRef(false);
 
   useEffect(() => {
     // Update auth state
     setIsAuth(isAuthenticated());
   }, []);
 
-  useEffect(() => {
-    // Check if user is authenticated and their status
-    const checkStatus = async () => {
-      const authenticated = isAuthenticated();
-      setIsAuth(authenticated);
+  const checkStatus = useCallback(async () => {
+    if (isCheckingRef.current) return;
+    isCheckingRef.current = true;
+    setIsChecking(true);
+    setCheckError(null);
 
+    const authenticated = isAuthenticated();
+    setIsAuth(authenticated);
+
+    try {
       if (authenticated) {
-        // If authenticated, use the dashboard endpoint
-        try {
-          const response = await api.get("/users/dashboard");
-          const status = response.data.user.status?.toUpperCase(); // Normalize to uppercase
+        const response = await api.get("/users/dashboard");
+        const status = response.data.user.status?.toUpperCase();
 
-          // If approved, redirect to dashboard immediately
+        if (status === "APPROVED") {
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("pendingIdNumber");
+          }
+          router.replace("/dashboard");
+          return;
+        }
+        if (status === "REJECTED") {
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("pendingIdNumber");
+            sessionStorage.setItem("accountRejected", "true");
+          }
+          router.replace("/login");
+          return;
+        }
+      } else if (typeof window !== "undefined") {
+        const pendingIdNumber = localStorage.getItem("pendingIdNumber");
+        if (pendingIdNumber) {
+          const response = await api.post("/auth/check-status", {
+            idNumber: pendingIdNumber,
+          });
+          const status = response.data.status?.toUpperCase();
+
           if (status === "APPROVED") {
-            // Clear pending ID from localStorage
-            if (typeof window !== "undefined") {
-              localStorage.removeItem("pendingIdNumber");
-            }
-            router.replace("/dashboard");
-            return;
-          } else if (status === "REJECTED") {
-            // Clear pending ID from localStorage
-            if (typeof window !== "undefined") {
-              localStorage.removeItem("pendingIdNumber");
-              sessionStorage.setItem("accountRejected", "true");
-            }
+            localStorage.removeItem("pendingIdNumber");
+            sessionStorage.setItem("accountApproved", "true");
             router.replace("/login");
             return;
           }
-          // If PENDING, stay on this page
-        } catch (err: any) {
-          // If 403, user might still be pending
-          if (err.response?.status === 403) {
-            // Stay on page - user is pending
+          if (status === "REJECTED") {
+            localStorage.removeItem("pendingIdNumber");
+            sessionStorage.setItem("accountRejected", "true");
+            router.replace("/login");
             return;
           }
-          console.error("Error checking status:", err);
+        }
+      }
+    } catch (err: any) {
+      if (err.response?.status === 403 || err.response?.status === 404) {
+        if (err.response?.status === 404 && typeof window !== "undefined") {
+          localStorage.removeItem("pendingIdNumber");
         }
       } else {
-        // If not authenticated, check status using ID number from localStorage
-        if (typeof window !== "undefined") {
-          const pendingIdNumber = localStorage.getItem("pendingIdNumber");
-          if (pendingIdNumber) {
-            try {
-              const response = await api.post("/auth/check-status", {
-                idNumber: pendingIdNumber,
-              });
-              const status = response.data.status?.toUpperCase(); // Normalize to uppercase
-
-              // If approved, redirect to login (user needs to login first)
-              if (status === "APPROVED") {
-                // Clear pending ID from localStorage
-                localStorage.removeItem("pendingIdNumber");
-                // Store a flag to show success message on login page
-                if (typeof window !== "undefined") {
-                  sessionStorage.setItem("accountApproved", "true");
-                }
-                // Redirect to login
-                router.replace("/login");
-                return;
-              } else if (status === "REJECTED") {
-                // Clear pending ID from localStorage
-                localStorage.removeItem("pendingIdNumber");
-                // Store a flag to show rejection message on login page
-                if (typeof window !== "undefined") {
-                  sessionStorage.setItem("accountRejected", "true");
-                }
-                router.replace("/login");
-                return;
-              }
-              // If PENDING, stay on this page
-            } catch (err: any) {
-              // If 404, user might not exist (shouldn't happen but handle gracefully)
-              if (err.response?.status === 404) {
-                // Clear invalid ID from localStorage
-                localStorage.removeItem("pendingIdNumber");
-              }
-              // For other errors, stay on page and continue checking
-              console.error("Error checking status:", err);
-            }
-          }
-        }
+        setCheckError("Unable to check status right now. Try again.");
+        console.error("Error checking status:", err);
       }
-    };
+    } finally {
+      setLastCheckedAt(new Date());
+      setIsChecking(false);
+      isCheckingRef.current = false;
+    }
+  }, [router]);
 
-    // Check immediately
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
     checkStatus();
 
-    // Check every 3 seconds to see if status changed (for both authenticated and unauthenticated)
-    // This ensures we catch status changes even if user logs in while on this page
-    const intervalId = setInterval(() => {
-      checkStatus();
-    }, 3000);
+    const pendingIdNumber = localStorage.getItem("pendingIdNumber");
+    if (!pendingIdNumber) {
+      return;
+    }
 
-    // Also check when page becomes visible (user switches back to tab)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        checkStatus();
+    const rawBaseUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+    const baseUrl =
+      window.location.protocol === "https:" &&
+      rawBaseUrl.startsWith("http://")
+        ? rawBaseUrl.replace("http://", "https://")
+        : rawBaseUrl;
+    const streamUrl = `${baseUrl}/auth/status-stream/${encodeURIComponent(
+      pendingIdNumber
+    )}`;
+
+    let eventSource: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let closed = false;
+
+    const handleStatus = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data || "{}");
+        const status = (data.status || "").toUpperCase();
+        if (status === "APPROVED") {
+          localStorage.removeItem("pendingIdNumber");
+          sessionStorage.setItem("accountApproved", "true");
+          router.replace("/login");
+        } else if (status === "REJECTED") {
+          localStorage.removeItem("pendingIdNumber");
+          sessionStorage.setItem("accountRejected", "true");
+          router.replace("/login");
+        }
+      } catch (err) {
+        console.error("Invalid SSE status payload:", err);
       }
     };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Cleanup
-    return () => {
-      clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    const connect = () => {
+      if (closed) return;
+      eventSource = new EventSource(streamUrl);
+      eventSource.addEventListener("status", handleStatus);
+      eventSource.onerror = () => {
+        if (closed) return;
+        eventSource?.close();
+        if (!reconnectTimer) {
+          reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            connect();
+          }, 10000);
+        }
+      };
     };
-  }, [router]);
+
+    connect();
+
+    return () => {
+      closed = true;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      eventSource?.close();
+    };
+  }, [checkStatus, router]);
 
   return (
     <div
@@ -165,6 +197,25 @@ export default function PendingPage() {
             <p className="leading-relaxed">
               If you have any questions, please contact our support team.
             </p>
+          </div>
+
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={checkStatus}
+              disabled={isChecking}
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-white font-semibold hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isChecking ? "Checking..." : "Check status"}
+            </button>
+            {lastCheckedAt && (
+              <div className="mt-3 text-sm text-gray-500">
+                Last checked: {lastCheckedAt.toLocaleTimeString()}
+              </div>
+            )}
+            {checkError && (
+              <div className="mt-3 text-sm text-red-600">{checkError}</div>
+            )}
           </div>
         </div>
       </div>
